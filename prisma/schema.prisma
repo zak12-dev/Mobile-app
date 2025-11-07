@@ -1,0 +1,139 @@
+// ────────────────────────────────────────────────
+//  PRISMA SCHEMA — Application de gestion de cabine Mobile Money
+//  Technologies : Next.js + Prisma + Supabase
+// ────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ────────────────────────────────────────────────
+// ENUMS
+// ────────────────────────────────────────────────
+enum Role {
+  ADMIN
+  AGENT
+}
+
+enum Operateur {
+  MTN
+  MOOV
+  WAVE
+  AIRTEL
+  AUTRE
+}
+
+enum TypeTransaction {
+  DEPOT
+  RETRAIT
+  TRANSFERT
+}
+
+// ────────────────────────────────────────────────
+// MODELES PRINCIPAUX
+// ────────────────────────────────────────────────
+
+// Utilisateur principal (gérant / propriétaire)
+model User {
+  id            String         @id @default(cuid())
+  name          String
+  email         String?        @unique
+  phone         String?        @unique
+  role          Role           @default(ADMIN)
+  passwordHash  String?        // facultatif si tu utilises Supabase Auth
+  createdAt     DateTime       @default(now())
+
+  // Relations
+  agents        Agent[]
+  comptes       Compte[]
+  transactions  Transaction[]
+  depenses      Depense[]
+  commissions   CommissionRule[]
+}
+
+// Agent employé du propriétaire
+model Agent {
+  id           String         @id @default(cuid())
+  name         String
+  phone        String
+  pin          String?        // code PIN optionnel
+  createdAt    DateTime       @default(now())
+
+  // Relations
+  userId       String
+  user         User           @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+}
+
+// Compte Mobile Money (MTN, Moov, etc.)
+model Compte {
+  id          String          @id @default(cuid())
+  operateur   Operateur
+  numero      String
+  solde       BigInt          @default(0)
+  createdAt   DateTime        @default(now())
+
+  // Relations
+  userId      String
+  user        User            @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+
+  @@unique([operateur, numero]) // un numéro unique par opérateur
+}
+
+// Transaction effectuée (dépôt, retrait, transfert)
+model Transaction {
+  id             String          @id @default(cuid())
+  type           TypeTransaction
+  montant        BigInt
+  commission     BigInt          @default(0)
+  clientNom      String?
+  clientNumero   String?
+  createdAt      DateTime        @default(now())
+
+  // Relations
+  compteId       String
+  compte         Compte          @relation(fields: [compteId], references: [id])
+
+  userId         String
+  user           User            @relation(fields: [userId], references: [id])
+
+  agentId        String?
+  agent          Agent?          @relation(fields: [agentId], references: [id])
+
+  @@index([createdAt])
+  @@index([type])
+}
+
+// Dépense liée à la cabine (frais, achats…)
+model Depense {
+  id          String    @id @default(cuid())
+  libelle     String
+  montant     BigInt
+  categorie   String?
+  createdAt   DateTime  @default(now())
+
+  // Relation
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+}
+
+// Règle de commission par opérateur / type
+model CommissionRule {
+  id          String           @id @default(cuid())
+  operateur   Operateur
+  type        TypeTransaction
+  taux        Float            // ex : 0.02 = 2%
+  createdAt   DateTime         @default(now())
+
+  // Relation
+  userId      String
+  user        User             @relation(fields: [userId], references: [id])
+
+  @@unique([userId, operateur, type]) // une règle unique par combinaison
+}
