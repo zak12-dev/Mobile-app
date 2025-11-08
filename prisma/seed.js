@@ -5,7 +5,7 @@ async function main() {
   // Créer un admin
   const admin = await prisma.user.create({
     data: {
-      name: "Admin Test",
+      name: "GBACADA Caleb",
       email: "admin@test.com",
       phone: "0123456789",
       role: "ADMIN",
@@ -17,7 +17,7 @@ async function main() {
   // Créer un agent lié à cet admin
   const agent = await prisma.agent.create({
     data: {
-      name: "Agent Test",
+      name: "AGOKOLI Zaki",
       phone: "0987654321",
       userId: admin.id,
     },

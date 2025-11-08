@@ -27,7 +27,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  activePath: string;
+}
 const data = {
   user: {
     name: "shadcn",
@@ -37,13 +39,13 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "/",
+      url: "/dashboard",
       icon: SquareTerminal,
       isActive: true,
     },
     {
       title: "Agents",
-      url: "#",
+      url: "/dashboard/agents",
       icon: Bot,
     },
     {
@@ -53,7 +55,7 @@ const data = {
     },
     {
       title: "comptes",
-      url: "#",
+      url: "/dashboard/comptes",
       icon: Settings2,
     },
 
@@ -77,7 +79,7 @@ const data = {
   ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ activePath, ...props }: AppSidebarProps) {
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
@@ -98,7 +100,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={data.navMain} activePath={activePath} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />

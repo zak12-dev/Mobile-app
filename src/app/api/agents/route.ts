@@ -24,15 +24,33 @@ export async function POST(req: NextRequest) {
   try {
     const { name, phone, pin, userId } = await req.json();
 
-    if (!name || !phone || !userId) {
+    if (!name || !phone) {
       return NextResponse.json(
-        { error: "name, phone et userId sont requis" },
+        { error: "Le nom et le téléphone sont requis" },
         { status: 400 }
       );
     }
 
+    // 🔹 Récupérer un utilisateur existant si userId n’est pas fourni
+    let finalUserId = userId;
+    if (!finalUserId) {
+      const user = await prisma.user.findFirst();
+      if (!user) {
+        return NextResponse.json(
+          { error: "Aucun utilisateur existant pour assigner l'agent" },
+          { status: 400 }
+        );
+      }
+      finalUserId = user.id;
+    }
+
     const newAgent = await prisma.agent.create({
-      data: { name, phone, pin, userId },
+      data: {
+        name,
+        phone,
+        pin,
+        userId: finalUserId,
+      },
     });
 
     return NextResponse.json(newAgent, { status: 201 });
